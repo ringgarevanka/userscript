@@ -1,14 +1,15 @@
 /* THIS IS A PRIVATE USERSCRIPT DO NOT USE */
 // ==UserScript==
-// @name    _
-// @namespace   _
-// @description _
+// @name    @ringgarevanka_Multi_Tools
+// @namespace   https://ringgarevanka.github.io/
+// @description Multi_Tools
 // @include *://*/*
 // @match   *://*/*
 // @exclude-match   -
-// @require -
-// @connect -
-// @version 1.0.0.235
+// @require https://cdn.jsdelivr.net/npm/eruda
+// @require https://cdn.jsdelivr.net/npm/eruda-dom
+// @connect https://cdn.jsdelivr.net
+// @version 1.0.0.255
 // @grant   none
 // @author  null
 // @compatible  chrome
@@ -19,12 +20,13 @@
 // @license MIT
 // @run-at  document-start
 // @run-at  document-body
+// @run-at  document-idle
 // @noframes
 // @homepageURL https://ringgarevanka.github.io/
-// @supportURL  _
+// @supportURL  https://ringgarevanka.github.io/
 // @downloadURL https://github.com/ringgarevanka/userscript/raw/userscript/_.user.js
 // @updateURL   https://github.com/ringgarevanka/userscript/raw/userscript/_.user.js
-// @copyright   null
+// @copyright   @ringgarevanka And All Script Use In This Code
 // @inject-into content
 // ==/UserScript==
 
@@ -42,199 +44,57 @@
     }
 })();
 
-// Disable SafeSearch on various search engines
-(function() {
-    'use strict';
-
-    const hostname = window.location.hostname;
-    const website = hostname.split('.').at(-2);
-
-    const cookieSettings = {
-        bing: {
-            cookie: "SRCHHPGUSR",
-            isArray: true,
-            name: "ADLT",
-            value: "OFF",
-            domain: `.${hostname.split('.').slice(-2).join('.')}`,
-            sameSite: "None",
-            separator: "&"
-        },
-        duckduckgo: {
-            cookie: "p",
-            isArray: false,
-            value: "-2",
-            sameSite: "Lax"
-        },
-        yep: {
-            localStorage: "safeSearch",
-            value: "off",
-            replaceUrl: "safeSearch"
-        },
-        yahoo: {
-            cookie: "sB",
-            isArray: true,
-            name: "vm",
-            value: "p",
-            domain: `.search.${hostname.split('.').slice(-2).join('.')}`,
-            sameSite: "None",
-            session: true,
-            separator: "&"
-        },
-        you: {
-            cookie: "safesearch_guest",
-            isArray: false,
-            value: "Off"
-        },
-        ecosia: {
-            cookie: "ECFG",
-            isArray: true,
-            name: "f",
-            value: "n",
-            domain: `.${hostname.split('.').slice(-2).join('.')}`,
-            separator: ":",
-            sameSite: "Lax"
-        },
-        qwant: {
-            cookie: "s",
-            isArray: false,
-            value: "0",
-            replaceUrl: "s"
-        },
-        metager: {
-            cookie: "web_setting_s",
-            isArray: false,
-            value: "o",
-            replaceUrl: "s"
-        },
-        startpage: {
-            cookie: "preferences",
-            isArray: true,
-            name: "disable_family_filter",
-            value: "1",
-            separator: "N",
-            equal: "EEE",
-            domain: `.${hostname.split('.').slice(-2).join('.')}`
-        },
-        brave: {
-            cookie: "safesearch",
-            isArray: false,
-            value: "off"
-        }
-    };
-
-    const setting = cookieSettings[website];
-
-    function setCookie(name, value, options = {}) {
-        options = {
-            path: '/',
-            ...options
-        };
-
-        if (options.expires instanceof Date) {
-            options.expires = options.expires.toUTCString();
-        }
-
-        let updatedCookie = encodeURIComponent(name) + "=" + encodeURIComponent(value);
-
-        for (let optionKey in options) {
-            updatedCookie += "; " + optionKey;
-            let optionValue = options[optionKey];
-            if (optionValue !== true) {
-                updatedCookie += "=" + optionValue;
-            }
-        }
-
-        document.cookie = updatedCookie;
-    }
-
-    function getCookie(name) {
-        let matches = document.cookie.match(new RegExp(
-            "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"));
-        return matches ? decodeURIComponent(matches[1]) : undefined;
-    }
-
-    function updateCookie() {
-        if (!setting.cookie) return;
-
-        let cookieValue = getCookie(setting.cookie);
-
-        if (setting.isArray) {
-            let parts = cookieValue ? cookieValue.split(setting.separator) : [];
-            let index = parts.findIndex(part => part.startsWith(setting.name + (setting.equal || '=')));
-
-            if (index !== -1) {
-                parts[index] = `${setting.name}${setting.equal || '='}${setting.value}`;
-            } else {
-                parts.push(`${setting.name}${setting.equal || '='}${setting.value}`);
-            }
-
-            cookieValue = parts.join(setting.separator);
-        } else {
-            cookieValue = setting.value;
-        }
-
-        setCookie(setting.cookie, cookieValue, {
-            domain: setting.domain,
-            sameSite: setting.sameSite,
-            secure: true,
-            expires: setting.session ? undefined : new Date('2038-01-01')
-        });
-    }
-
-    function updateLocalStorage() {
-        if (!setting.localStorage) return;
-        localStorage.setItem(setting.localStorage, setting.value);
-    }
-
-    function removeUrlParam(url, parameter) {
-        const urlParts = url.split('?');
-        if (urlParts.length < 2) return url;
-
-        const prefix = encodeURIComponent(parameter) + '=';
-        const parts = urlParts[1].split(/[&;]/g);
-
-        for (let i = parts.length; i-- > 0;) {
-            if (parts[i].lastIndexOf(prefix, 0) !== -1) {
-                parts.splice(i, 1);
-            }
-        }
-
-        return urlParts[0] + (parts.length > 0 ? '?' + parts.join('&') : '');
-    }
-
-    function main() {
-        if (setting.cookie) {
-            updateCookie();
-        } else if (setting.localStorage) {
-            updateLocalStorage();
-        }
-
-        if (setting.replaceUrl) {
-            const newUrl = removeUrlParam(window.location.href, setting.replaceUrl);
-            if (newUrl !== window.location.href) {
-                window.location.replace(newUrl);
-            }
-        }
-    }
-
-    main();
-})();
-
 // Load and initialize Eruda
 (function() {
     'use strict';
+    const getType = value => Object.prototype.toString.call(value).slice(8, -1);
 
-    function isMobileDevice() {
-        return /Android|webOS|iOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    }
+    const error = msg => console.error("[Eruda Loader] " + msg);
 
-    if (isMobileDevice()) {
-        var script = document.createElement("script");
-        script.src = "https://cdn.jsdelivr.net/npm/eruda/eruda.min.js";
-        script.onload = function() {
-            eruda.init();
-        };
-        document.body.appendChild(script);
+    const loadError = (name, type) => {
+        error(`${name} is not an ${type}`);
+        return false;
+    };
+
+    const isErudaLoaded = getType(window.eruda) !== "Object" ? loadError("window.eruda", "Object") : getType(eruda._isInit) !== "Boolean" ? loadError("eruda._isInit", "Boolean") : true;
+
+    if (isErudaLoaded && eruda._isInit === false) {
+        eruda.init();
+
+        eruda.get("console").config.set("maxLogNum", 256);
+
+        eruda.add(erudaDom);
+
+        (function() {
+            const style = document.createElement("style");
+            style.textContent = `
+/* use monospace font */
+#eruda-console .eruda-logs-container,
+#eruda-elements .eruda-parents,
+#eruda-elements .eruda-breadcrumb,
+#eruda-elements .eruda-children,
+#eruda-elements .eruda-table-wrapper,
+#eruda-elements .eruda-style-rules,
+#eruda-resources table,
+#eruda-sources .eruda-code-wrapper,
+#eruda-sources .eruda-raw-wrapper {
+    font-family: monospace;
+}
+
+/* Circlize the entry button */
+.eruda-container .eruda-entry-btn {
+    border-radius: 50%;
+}
+/* Centerize its icon */
+.eruda-icon-tool {
+    font-size: 28px;
+}
+.eruda-icon-tool::before {
+    vertical-align: middle;
+}
+`.trim();
+            eruda._shadowRoot.appendChild(style);
+        })();
     }
 })();
 
